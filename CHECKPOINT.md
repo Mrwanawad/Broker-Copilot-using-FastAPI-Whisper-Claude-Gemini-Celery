@@ -25,6 +25,10 @@ Last update: 2026-11-16 (session 2: Gemini fallback, synthetic Gemini eval, pyan
   chowned (worker failed with PermissionError on HF cache). `docker compose up` verified: text + audio
   calls API -> Redis -> Celery -> review on Postgres. Image 2.25 GB, no pyannote inside (heuristic).
 - 34 tests, ruff clean.
+- pyannote REAL run done (terms accepted): DER 0.146, roles 1.00, fields 0.855, 53 s/audio min vs heuristic
+  0.15 / 1.00 / 0.86 / 18 s. Needed torch add_safe_globals (TorchVersion, Specifications, Problem,
+  Resolution) for torch>=2.6 weights-only load. Heuristic stays CPU default.
+- GitHub: public repo Mrwanawad/Broker-Copilot-using-FastAPI-Whisper-Claude-Gemini-Celery (main).
 
 ## Status
 All architecture components implemented and running end to end on CPU. 29 tests pass, ruff clean.
@@ -162,8 +166,6 @@ Not yet: live Claude eval, pyannote run, Docker build check, browser check of th
 ## Open
 - Claude summarizer eval (needs ANTHROPIC_API_KEY): `python -m app.evaluation.run --summarizer claude`.
   Server-side refusal fallbacks not enabled yet.
-- pyannote diarization: BLOCKED on accepting terms for the two gated repos on HF account Mrwaan; then
-  `python scripts/eval_audio.py --diarizer pyannote --whisper-model small`, DER vs heuristic 0.15.
 - Live Gemini eval for all 5 cases when quota returns; fix the two suspect gold labels (asked user).
 - Bigger held-out eval set; real consented call audio for WER and Whisper fine-tuning.
 - Webhooks tested only with stubs.

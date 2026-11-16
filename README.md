@@ -87,6 +87,7 @@ python scripts/eval_audio.py --whisper-model small  # WER/CER, DER, role accurac
 | --- | --- |
 | Text -> CRM fields, rules | 0.95 field accuracy, 26 auto-applied fields, 0 wrong auto-applied |
 | Audio, whisper-small CPU int8, heuristic diarization | WER 0.36, CER 0.09, DER 0.15, broker/client role accuracy 1.00, fields from audio 0.86, 18 s processing per audio minute (i7-11370H) |
+| Audio, whisper-small CPU int8, pyannote 3.1 diarization | WER 0.36, CER 0.09, DER 0.15, role accuracy 1.00, fields from audio 0.86, 53 s processing per audio minute (i7-11370H, CPU) |
 
 WER is high and CER low: most errors are spelling drift in dialect words ("شليه" for "شاليه",
 "كش" for "كاش"), not wrong words. The gazetteer and cue lists carry the common ASR spellings, and
@@ -108,7 +109,13 @@ model outputs; they only exercise the Gemini -> evidence check -> CRM path offli
 (0.85 field accuracy, 1 wrong auto-applied; `reports/eval_gemini_synthetic.json`, `"synthetic": true`).
 
 Not yet measured: the Claude summarizer (no API key on the build machine; its wiring is covered by
-stubbed tests in `tests/test_claude_path.py`), pyannote DER, and anything on real phone audio.
+stubbed tests in `tests/test_claude_path.py`) and anything on real phone audio.
+
+pyannote vs heuristic: same DER (0.15) and role accuracy on the clean two-voice TTS calls, at ~3x the CPU
+time. DER here is scored on ASR segments carrying the diarizer's label, so ASR segment boundaries cap
+it for both. The heuristic stays the CPU default; pyannote is for real calls with noise and overlap,
+ideally on a GPU. `--synthetic-pyannote` (synthesized turns, report marked synthetic) predates access
+to the gated models and is kept only for runs without an HF token.
 
 ## Guardrails
 

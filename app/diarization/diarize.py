@@ -39,7 +39,13 @@ def _cue_score(text: str, cues: list[str]) -> int:
 @lru_cache
 def _pyannote_pipeline():
 
+    import torch
     from pyannote.audio import Pipeline
+    from pyannote.audio.core.task import Problem, Resolution, Specifications
+
+    # torch>=2.6 loads checkpoints weights-only; pyannote 3.x checkpoints also pickle these classes.
+    # Allow exactly them (official pyannote models) instead of disabling the check.
+    torch.serialization.add_safe_globals([torch.torch_version.TorchVersion, Specifications, Problem, Resolution])
 
     settings = get_settings()
     pipeline = Pipeline.from_pretrained(settings.pyannote_model, use_auth_token=settings.hf_token or None)

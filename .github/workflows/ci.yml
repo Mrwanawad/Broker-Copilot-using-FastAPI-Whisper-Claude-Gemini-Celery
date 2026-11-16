@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: uv venv && uv pip install -r pyproject.toml && uv pip install pytest ruff
+      - run: uv pip install -r pyproject.toml && uv pip install pytest ruff  # setup-uv already made .venv
       - run: uv run --no-project ruff check app tests scripts
       - run: uv run --no-project pytest
         env:

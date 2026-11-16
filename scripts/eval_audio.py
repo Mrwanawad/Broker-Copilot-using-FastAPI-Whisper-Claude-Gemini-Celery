@@ -5,11 +5,17 @@ Reports WER/CER, DER, speaker-role accuracy, CRM field accuracy from audio, and 
 per audio minute. Writes reports/eval_audio_<model>.json.
 
     python scripts/eval_audio.py --whisper-model base
+    python scripts/eval_audio.py --whisper-model small --diarizer pyannote --synthetic-pyannote
+
+--synthetic-pyannote: no access to the gated pyannote models, so its turns are SYNTHESIZED from the
+reference turns (seeded +-0.25 s boundary jitter, anonymous SPEAKER_0x labels in random order). ASR,
+role assignment and summary still run for real. The report is marked "synthetic": true.
 """
 
 import argparse
 import json
 import os
+import random
 import sys
 import tempfile
 import time
@@ -26,6 +32,7 @@ def main() -> None:
     parser.add_argument("--whisper-model", default="base")
     parser.add_argument("--summarizer", default="rules")
     parser.add_argument("--diarizer", default="heuristic")
+    parser.add_argument("--synthetic-pyannote", action="store_true", help="synthesized pyannote turns")
     args = parser.parse_args()
     os.environ.update(BC_WHISPER_MODEL=args.whisper_model, BC_SUMMARIZER=args.summarizer,
                       BC_DIARIZER=args.diarizer, BC_ASR_BACKEND="faster_whisper")
@@ -36,10 +43,30 @@ def main() -> None:
     from app.pipeline import transcribe_audio
     from app.summarizer.service import summarize
 
+    if args.synthetic_pyannote:
+        from app.diarization import diarize
+
+        refs = {}
+
+        def synthetic_turns(wav: Path, num_speakers: int | None = 2) -> list:
+            ref = next(iter(refs.values()))  # the case being evaluated (wav here is the preprocessed copy)
+            rng = random.Random(ref["id"])
+            labels = dict(zip(["broker", "client"], rng.sample(["SPEAKER_00", "SPEAKER_01"], 2), strict=True))
+            turns = []
+            for t in ref["turns"]:
+                start = max(0.0, t["start"] + rng.uniform(-0.25, 0.25))
+                turns.append((start, max(start + 0.2, t["end"] + rng.uniform(-0.25, 0.25)), labels[t["speaker"]]))
+            return turns
+
+        diarize.pyannote_turns = synthetic_turns
+
     rows = []
     for ref_path in sorted((ROOT / "data/demo_audio").glob("*.ref.json")):
         ref = json.loads(ref_path.read_text(encoding="utf-8"))
         wav = ref_path.with_name(ref["id"] + ".wav")
+        if args.synthetic_pyannote:
+            refs.clear()
+            refs[ref["id"]] = ref
         timings: dict = {}
         t0 = time.perf_counter()
         with tempfile.TemporaryDirectory() as tmp:
@@ -74,9 +101,11 @@ def main() -> None:
         return round(sum(r[key] for r in rows) / len(rows), 3) if rows else 0.0
 
     report = {"whisper_model": args.whisper_model, "diarizer": args.diarizer, "summarizer": args.summarizer,
+              "synthetic": args.synthetic_pyannote,
               **{k: mean(k) for k in ("wer", "cer", "der", "role_accuracy", "field_accuracy", "sec_per_audio_min")},
               "rows": rows}
-    out = ROOT / "reports" / f"eval_audio_{args.whisper_model}.json"
+    suffix = "_pyannote_synthetic" if args.synthetic_pyannote else ""
+    out = ROOT / "reports" / f"eval_audio_{args.whisper_model}{suffix}.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print({k: v for k, v in report.items() if k != "rows"})
