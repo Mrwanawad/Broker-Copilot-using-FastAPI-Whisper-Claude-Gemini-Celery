@@ -1,0 +1,71 @@
+{
+ "id": "c3",
+ "lead_id": "L-1003",
+ "call_date": "2026-11-14",
+ "turns": [
+  {
+   "start": 0.0,
+   "end": 6.984,
+   "speaker": "broker",
+   "text": "صباح الخير يا أستاذ كريم, بكلم حضرتك من ناوي عشان الشاليه في الساحل"
+  },
+  {
+   "start": 7.484,
+   "end": 12.596,
+   "speaker": "client",
+   "text": "صباح النور, أنا عايز شاليه أوضتين للمصيف"
+  },
+  {
+   "start": 13.096,
+   "end": 16.288,
+   "speaker": "client",
+   "text": "الميزانية 8 مليون كاش"
+  },
+  {
+   "start": 16.788,
+   "end": 21.252,
+   "speaker": "broker",
+   "text": "ممتاز, عندنا في مراسي وهاسيندا وست"
+  },
+  {
+   "start": 21.752,
+   "end": 27.056,
+   "speaker": "client",
+   "text": "بس أنا خايف من التسليم, المطور ده اتأخر قبل كده"
+  },
+  {
+   "start": 27.556,
+   "end": 32.524,
+   "speaker": "broker",
+   "text": "هبعتلك سابقة أعمال المطور وتواريخ التسليم"
+  },
+  {
+   "start": 33.024,
+   "end": 37.752,
+   "speaker": "client",
+   "text": "تمام, وعايز أعرف لو فيه خصم على الكاش"
+  },
+  {
+   "start": 38.252,
+   "end": 41.732,
+   "speaker": "broker",
+   "text": "هكلمك يوم السبت بالعرض النهائي"
+  }
+ ],
+ "gold": {
+  "areas": [
+   "North Coast"
+  ],
+  "unit_type": "chalet",
+  "bedrooms": 2,
+  "budget_max": 8000000,
+  "payment_method": "cash",
+  "purpose": "summer",
+  "objections": [
+   "delivery",
+   "trust"
+  ],
+  "stage": "negotiation",
+  "follow_up": "2026-11-15"
+ }
+}

@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: uv venv && uv pip install -r pyproject.toml && uv pip install pytest ruff
+      - run: uv run --no-project ruff check app tests scripts
+      - run: uv run --no-project pytest
+        env:
+          PYTHONUTF8: "1"
+      - name: offline summary eval (rules)
+        run: uv run --no-project python -m app.evaluation.run --summarizer rules
+        env:
+          PYTHONUTF8: "1"
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t broker-copilot:ci .

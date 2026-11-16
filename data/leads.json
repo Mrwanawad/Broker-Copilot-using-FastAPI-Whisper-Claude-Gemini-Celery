@@ -1,0 +1,63 @@
+[
+ {
+  "lead_id": "L-1001",
+  "name": "Ahmed Samir",
+  "phone": "+201000000001",
+  "owner": "broker.mona",
+  "stage": "new",
+  "preferred_areas": [],
+  "unit_type": null,
+  "bedrooms": null,
+  "budget_min": null,
+  "budget_max": null,
+  "down_payment": null,
+  "payment_method": null,
+  "installment_years": null,
+  "delivery_preference": null,
+  "purpose": null,
+  "next_follow_up": null,
+  "source": "Facebook ad"
+ },
+ {
+  "lead_id": "L-1002",
+  "name": "Sara Hassan",
+  "phone": "+201000000002",
+  "owner": "broker.mona",
+  "stage": "qualified",
+  "preferred_areas": [
+   "Sheikh Zayed"
+  ],
+  "unit_type": "apartment",
+  "bedrooms": 3,
+  "budget_min": null,
+  "budget_max": 6000000,
+  "down_payment": null,
+  "payment_method": "installments",
+  "installment_years": null,
+  "delivery_preference": null,
+  "purpose": "living",
+  "next_follow_up": null,
+  "source": "Website"
+ },
+ {
+  "lead_id": "L-1003",
+  "name": "Karim Adel",
+  "phone": "+201000000003",
+  "owner": "broker.omar",
+  "stage": "viewing",
+  "preferred_areas": [
+   "North Coast"
+  ],
+  "unit_type": "chalet",
+  "bedrooms": 2,
+  "budget_min": null,
+  "budget_max": 9000000,
+  "down_payment": null,
+  "payment_method": null,
+  "installment_years": null,
+  "delivery_preference": null,
+  "purpose": "summer",
+  "next_follow_up": null,
+  "source": "Referral"
+ }
+]

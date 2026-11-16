@@ -1,0 +1,60 @@
+{
+ "id": "c2",
+ "lead_id": "L-1002",
+ "call_date": "2026-11-10",
+ "turns": [
+  {
+   "start": 0.0,
+   "end": 5.904,
+   "speaker": "broker",
+   "text": "أهلا يا مدام سارة, معاكي منى من ناوي بخصوص الشقة في زايد"
+  },
+  {
+   "start": 6.404,
+   "end": 12.788,
+   "speaker": "client",
+   "text": "أهلا, أنا غيرت رأيي شوية, ممكن نبص على أكتوبر كمان"
+  },
+  {
+   "start": 13.288,
+   "end": 17.584,
+   "speaker": "broker",
+   "text": "أكيد, الميزانية لسه 6 مليون?"
+  },
+  {
+   "start": 18.084,
+   "end": 23.244,
+   "speaker": "client",
+   "text": "لا, ميزانيتي بقت مليونين لتلاتة مليون بس"
+  },
+  {
+   "start": 23.744,
+   "end": 28.112,
+   "speaker": "client",
+   "text": "وعايزة استلام فوري, مش هقدر أستنى"
+  },
+  {
+   "start": 28.612,
+   "end": 35.62,
+   "speaker": "broker",
+   "text": "في استلام فوري في أكتوبر بأسعار كويسة, هبعت لحضرتك العروض بكرة"
+  },
+  {
+   "start": 36.12,
+   "end": 41.136,
+   "speaker": "client",
+   "text": "تمام, بس الكاش مش هينفع, لازم تقسيط"
+  }
+ ],
+ "gold": {
+  "areas": [
+   "6th of October"
+  ],
+  "budget_min": 2000000,
+  "budget_max": 3000000,
+  "delivery_preference": "ready",
+  "payment_method": "installments",
+  "objections": [],
+  "follow_up": "2026-11-11"
+ }
+}

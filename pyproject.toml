@@ -1,0 +1,73 @@
+[project]
+name = "broker-copilot"
+version = "0.1.0"
+description = "Egyptian-Arabic call and WhatsApp copilot for real estate brokers: transcribe, diarize, summarize, auto-fill CRM, match units."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "python-multipart>=0.0.12",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy>=2.0.36",
+    "psycopg[binary]>=3.2",
+    "anthropic>=2.6",
+    "google-genai>=1.30",
+    "celery[redis]>=5.4",
+    "rank-bm25>=0.2.2",
+    "numpy>=1.26",
+    "scikit-learn>=1.5",
+    "jiwer>=3.0",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+# Heavy speech stack. Without it the pipeline still runs on the Whisper API and text inputs.
+speech = [
+    "faster-whisper>=1.1",
+    "silero-vad>=5.1",
+    "noisereduce>=3.0",
+    "soundfile>=0.12",
+    "pyannote.audio>=3.3,<4",
+    # pyannote 3.x breaks on torchaudio>=2.9 (AudioMetaData removed) and huggingface_hub>=1.0 (use_auth_token)
+    "torch>=2.4,<2.9",
+    "torchaudio>=2.4,<2.9",
+    "huggingface_hub>=0.25,<1.0",
+    "pyannote.metrics>=3.2",
+]
+arabic = ["camel-tools>=1.5"]
+vectors = ["sentence-transformers>=3.2", "pgvector>=0.3"]
+ui = ["streamlit>=1.40", "pandas>=2.2"]
+openai = ["openai>=1.50"]
+s3 = ["boto3>=1.35"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.8"]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/summarizer/prompt.py" = ["E501"]  # prompt text
+"app/summarizer/playbook.py" = ["E501"]  # cue tables
+"app/text/gazetteer.py" = ["E501"]
+"app/text/numbers.py" = ["E501"]
+"ui/review_app.py" = ["E501"]  # inline CSS
+"app/text/normalize.py" = ["E501"]
+"app/summarizer/rules.py" = ["E501"]
+"tests/**" = ["E501"]
+"data/**" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,11 @@
+.venv
+.env
+.git
+**/__pycache__
+.pytest_cache
+.ruff_cache
+data/uploads
+data/demo_audio
+data/*.db
+reports
+tests

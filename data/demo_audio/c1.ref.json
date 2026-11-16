@@ -1,0 +1,90 @@
+{
+ "id": "c1",
+ "lead_id": "L-1001",
+ "call_date": "2026-11-12",
+ "turns": [
+  {
+   "start": 0.0,
+   "end": 7.968,
+   "speaker": "broker",
+   "text": "مساء الخير يا أستاذ أحمد, معاك منى من ناوي, حضرتك كنت سايب طلب على الإعلان"
+  },
+  {
+   "start": 8.468,
+   "end": 13.868,
+   "speaker": "client",
+   "text": "أيوه أهلا, أنا بدور على شقة في التجمع الخامس"
+  },
+  {
+   "start": 14.368,
+   "end": 19.048,
+   "speaker": "broker",
+   "text": "تمام يا فندم, حضرتك محتاج كام أوضة?"
+  },
+  {
+   "start": 19.548,
+   "end": 23.868,
+   "speaker": "client",
+   "text": "3 اوض, عشان عندي ولدين"
+  },
+  {
+   "start": 24.368,
+   "end": 27.368,
+   "speaker": "broker",
+   "text": "والميزانية في حدود كام?"
+  },
+  {
+   "start": 27.868,
+   "end": 34.348,
+   "speaker": "client",
+   "text": "ميزانيتي في حدود 4 مليون ونص, وعايز تقسيط على 8 سنين"
+  },
+  {
+   "start": 34.848,
+   "end": 41.088,
+   "speaker": "client",
+   "text": "بس المقدم مش عايزه يكون كبير, أقصى حاجة 400 ألف"
+  },
+  {
+   "start": 41.588,
+   "end": 49.34,
+   "speaker": "broker",
+   "text": "تمام, عندنا كذا اختيار في التجمع, هبعتلك على الواتساب النهارده 3 وحدات"
+  },
+  {
+   "start": 49.84,
+   "end": 54.976,
+   "speaker": "client",
+   "text": "تمام, بس بصراحة الأسعار في التجمع غالية شوية"
+  },
+  {
+   "start": 55.476,
+   "end": 60.252,
+   "speaker": "broker",
+   "text": "هرتب لحضرتك معاينة يوم الخميس لو مناسب"
+  },
+  {
+   "start": 60.752,
+   "end": 65.096,
+   "speaker": "client",
+   "text": "ماشي, بس لازم أسأل مراتي الأول"
+  }
+ ],
+ "gold": {
+  "areas": [
+   "New Cairo"
+  ],
+  "unit_type": "apartment",
+  "bedrooms": 3,
+  "budget_max": 4500000,
+  "down_payment": 400000,
+  "payment_method": "installments",
+  "installment_years": 8,
+  "objections": [
+   "price",
+   "family_decision"
+  ],
+  "stage": "viewing",
+  "follow_up": "2026-11-13"
+ }
+}

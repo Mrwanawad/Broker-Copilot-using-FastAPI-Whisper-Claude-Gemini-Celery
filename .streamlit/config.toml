@@ -1,0 +1,2 @@
+[server]
+maxUploadSize = 50  # MB, same cap as the API (BC_MAX_UPLOAD_MB)
