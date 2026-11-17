@@ -4,6 +4,7 @@ Same prompt and the same `CallSummary` schema as the Claude path, so `verify_evi
 """
 
 import logging
+import time
 from datetime import date
 from functools import lru_cache
 
@@ -12,6 +13,9 @@ from app.domain import CallSummary, Transcript
 from app.summarizer.prompt import SYSTEM_PROMPT, build_user_prompt
 
 log = logging.getLogger(__name__)
+
+RETRY_CODES = {429, 500, 503}  # rate limit (free tier: ~5 RPM) and "model overloaded"
+RETRY_WAITS_S = (5, 15, 30)
 
 
 @lru_cache
@@ -31,11 +35,22 @@ def gemini_available() -> bool:
     return True
 
 
+def _generate(**kwargs):
+    for wait in (*RETRY_WAITS_S, None):
+        try:
+            return get_client().models.generate_content(**kwargs)
+        except Exception as exc:
+            if wait is None or getattr(exc, "code", None) not in RETRY_CODES:
+                raise
+            log.warning("Gemini %s, retrying in %ss", exc.code, wait)
+            time.sleep(wait)
+
+
 def summarize(transcript: Transcript, call_date: date, lead_context: str = "") -> tuple[CallSummary, dict]:
     from google.genai import types
 
     settings = get_settings()
-    response = get_client().models.generate_content(
+    response = _generate(
         model=settings.gemini_model,
         contents=build_user_prompt(transcript, call_date, lead_context),
         config=types.GenerateContentConfig(

@@ -79,7 +79,7 @@ audio rendered with Edge TTS Egyptian voices (`scripts/make_demo_audio.py`). The
 developed against the same 5 calls, so its text score is optimistic; real numbers need audited calls.
 
 ```bash
-python -m app.evaluation.run --summarizer rules     # or claude
+python -m app.evaluation.run --summarizer rules     # or claude / gemini (--delay 13 on the free tier)
 python scripts/eval_audio.py --whisper-model small  # WER/CER, DER, role accuracy, fields from audio
 ```
 
@@ -108,8 +108,18 @@ model outputs; they only exercise the Gemini -> evidence check -> CRM path offli
 `python -m app.evaluation.run --summarizer gemini --replay data/eval/gemini_replay.jsonl`
 (0.85 field accuracy, 1 wrong auto-applied; `reports/eval_gemini_synthetic.json`, `"synthetic": true`).
 
-Not yet measured: the Claude summarizer (no API key on the build machine; its wiring is covered by
-stubbed tests in `tests/test_claude_path.py`) and anything on real phone audio.
+**Synthetic** Claude eval (no Anthropic API key on the build machine): `data/eval/claude_replay.jsonl`
+holds 5 responses written by Claude Opus 5.5 in a Claude Code session from the system prompt and the
+transcript only, not through the API. The author had seen one gold label (c1 follow-up) beforehand and
+did not adjust to it. `python -m app.evaluation.run --summarizer claude --replay data/eval/claude_replay.jsonl`
+gives 0.85 field accuracy, 29 auto-applied, 2 wrong auto-applied (`reports/eval_claude_synthetic.json`).
+Misses: lead stage on c3 (qualified vs gold negotiation), an "installment" objection on c4 the gold
+doesn't count, and the same three follow-up / area labels the live Gemini run disputed (c1, c2, c3).
+A live API run is still needed.
+
+A second live Gemini run (2026-11-17, 13 s between cases, 3 retries on 429/503) got 1 of 5 through:
+two local network drops and two 503 "high demand" errors that outlasted the retries. The 3-of-5 run
+above stays the live reference. Nothing is measured yet on real phone audio.
 
 pyannote vs heuristic: same DER (0.15) and role accuracy on the clean two-voice TTS calls, at ~3x the CPU
 time. DER here is scored on ASR segments carrying the diarizer's label, so ASR segment boundaries cap

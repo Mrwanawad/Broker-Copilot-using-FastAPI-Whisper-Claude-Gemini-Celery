@@ -131,3 +131,19 @@ def test_empty_llm_needs_backfilled_from_rules(monkeypatch):
     assert s.needs.unit_type.value == "apartment" and s.needs.bedrooms.value == 3 and s.needs.areas == ["New Cairo"]
     assert {"unit_type", "bedrooms", "areas"} <= set(out["usage"]["backfilled_from_rules"])
     assert "budget_max_egp" not in out["usage"]["backfilled_from_rules"]
+
+
+def test_gemini_retries_overload_then_succeeds(monkeypatch):
+    models = _use_fake_gemini(monkeypatch, _gemini_summary())
+    real, calls = models.generate_content, []
+
+    def flaky(**kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise type("ServerError", (Exception,), {"code": 503})()
+        return real(**kwargs)
+
+    models.generate_content = flaky
+    monkeypatch.setattr(gemini, "RETRY_WAITS_S", (0, 0, 0))
+    summary, _ = gemini.summarize(parse_speaker_text(CALL_TEXT), date(2026, 11, 12))
+    assert len(calls) == 2 and summary.needs.budget_max_egp.value == 4500000

@@ -5,6 +5,7 @@
     python -m app.evaluation.run --summarizer claude
     python -m app.evaluation.run --summarizer gemini
     python -m app.evaluation.run --summarizer gemini --replay data/eval/gemini_replay.jsonl  # offline, synthetic
+    python -m app.evaluation.run --summarizer claude --replay data/eval/claude_replay.jsonl  # offline, synthetic
 
 Reports per-field accuracy, how many wrong values would have been auto-written (the number that
 matters: a wrong auto_apply silently corrupts the CRM), and latency. Writes reports/eval_<name>.json.
@@ -42,6 +43,19 @@ def predicted_fields(summary, changes) -> dict:
     return out
 
 
+class _ReplayMessages:
+    """Stands in for the Anthropic client: returns stored responses (one per case, in order)."""
+
+    def __init__(self, path: Path):
+        self.responses = [json.loads(line)["response"] for line in path.read_text(encoding="utf-8").splitlines()]
+
+    def parse(self, **kwargs):
+        from app.domain import CallSummary
+
+        return SimpleNamespace(parsed_output=CallSummary.model_validate(self.responses.pop(0)), stop_reason="end_turn",
+                               usage=SimpleNamespace(input_tokens=0, output_tokens=0), model=kwargs["model"])
+
+
 class _ReplayModels:
     """Stands in for the Gemini client: returns stored responses (one per case, in order)."""
 
@@ -55,11 +69,17 @@ class _ReplayModels:
                                usage_metadata=meta, response_id="replay")
 
 
-def run(path: Path, summarizer: str | None, replay: Path | None = None) -> dict:
+def run(path: Path, summarizer: str | None, replay: Path | None = None, delay_s: float = 0) -> dict:
     if summarizer:
         os.environ["BC_SUMMARIZER"] = summarizer
         get_settings.cache_clear()
-    if replay:
+    if replay and summarizer == "claude":
+        from app.summarizer import claude
+
+        messages = _ReplayMessages(replay)
+        claude.get_client = lambda: SimpleNamespace(messages=messages)
+        claude.claude_available = lambda: True
+    elif replay:
         from app.summarizer import gemini
 
         models = _ReplayModels(replay)
@@ -74,6 +94,8 @@ def run(path: Path, summarizer: str | None, replay: Path | None = None) -> dict:
     rows, latencies = [], []
     for line in path.read_text(encoding="utf-8").splitlines():
         case = json.loads(line)
+        if rows and delay_s:
+            time.sleep(delay_s)  # stay under the provider's requests-per-minute limit
         transcript = parse_text(_TextCall(case["text"]))
         t0 = time.perf_counter()
         result = summarize(transcript, date.fromisoformat(case["call_date"]))
@@ -113,10 +135,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default=str(ROOT / "data/eval/calls.jsonl"))
     parser.add_argument("--summarizer", choices=["auto", "rules", "claude", "gemini"], default=None)
-    parser.add_argument("--replay", default=None, help="stored Gemini responses (offline, synthetic)")
+    parser.add_argument("--replay", default=None, help="stored Claude or Gemini responses (offline, synthetic)")
+    parser.add_argument("--delay", type=float, default=0, help="seconds between cases (free-tier RPM limits)")
     args = parser.parse_args()
-    report = run(Path(args.data), args.summarizer, Path(args.replay) if args.replay else None)
-    name = (report["summarizer"] or "none").split(":")[0] + ("_synthetic" if args.replay else "")
+    report = run(Path(args.data), args.summarizer, Path(args.replay) if args.replay else None, args.delay)
+    # name by the requested summarizer: a run whose first case fell back to rules must not overwrite eval_rules
+    name = (args.summarizer or (report["summarizer"] or "none").split(":")[0]) + ("_synthetic" if args.replay else "")
     out = ROOT / "reports" / f"eval_{name}.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
