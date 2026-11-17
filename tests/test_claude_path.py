@@ -120,3 +120,14 @@ def test_gemini_eval_replay_runs_offline():
     report = run(Path("data/eval/calls.jsonl"), "gemini", Path("data/eval/gemini_replay.jsonl"))
     assert report["synthetic"] and report["cases"] == 5
     assert all(r["summarizer"].startswith("gemini:") and r["fallback"] is None for r in report["rows"])
+
+
+def test_empty_llm_needs_backfilled_from_rules(monkeypatch):
+    monkeypatch.setenv("BC_SUMMARIZER", "gemini")
+    _use_fake_gemini(monkeypatch, _gemini_summary())  # LLM gave only the budget
+    out = service.summarize(parse_speaker_text(CALL_TEXT), date(2026, 11, 12))
+    s = out["summary"]
+    assert s.needs.budget_max_egp.confidence == 0.95  # LLM value kept
+    assert s.needs.unit_type.value == "apartment" and s.needs.bedrooms.value == 3 and s.needs.areas == ["New Cairo"]
+    assert {"unit_type", "bedrooms", "areas"} <= set(out["usage"]["backfilled_from_rules"])
+    assert "budget_max_egp" not in out["usage"]["backfilled_from_rules"]

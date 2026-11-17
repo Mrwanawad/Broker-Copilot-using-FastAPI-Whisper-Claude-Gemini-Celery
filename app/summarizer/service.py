@@ -6,7 +6,7 @@ from datetime import date
 from difflib import SequenceMatcher
 
 from app.config import get_settings
-from app.domain import CallSummary, Evidence, Field_, Transcript
+from app.domain import CallSummary, Evidence, Field_, Needs, Transcript
 from app.summarizer import rules
 from app.summarizer.playbook import SUGGESTED_RESPONSES
 from app.text.normalize import normalize_search
@@ -80,6 +80,21 @@ def _providers() -> list[str]:
     return [name for name, ok in (("claude", claude_available()), ("gemini", gemini_available())) if ok]
 
 
+def backfill_needs(summary: CallSummary, fallback: CallSummary) -> list[str]:
+    """Fill needs the LLM left empty from the rules extractor (Gemini sometimes returns empty needs while
+    its headline states them). Never overrides an LLM value."""
+    filled = []
+    for name in Needs.model_fields:
+        llm, rule = getattr(summary.needs, name), getattr(fallback.needs, name)
+        if isinstance(rule, Field_) and llm.value is None and rule.value is not None:
+            setattr(summary.needs, name, rule)
+            filled.append(name)
+    if not summary.needs.areas and fallback.needs.areas:
+        summary.needs.areas, summary.needs.area_evidence = fallback.needs.areas, fallback.needs.area_evidence
+        filled.append("areas")
+    return filled
+
+
 def summarize(transcript: Transcript, call_date: date | None = None, lead_context: str = "") -> dict:
     """Returns {"summary": CallSummary, "flagged": [...], "usage": {...}, "fallback_reason": str|None}."""
     call_date = call_date or date.today()
@@ -99,6 +114,10 @@ def summarize(transcript: Transcript, call_date: date | None = None, lead_contex
             failures.append(f"{name}: {type(exc).__name__}: {exc}"[:300])
     if summary is None:
         summary = rules.extract(transcript, call_date)
+    else:
+        backfilled = backfill_needs(summary, rules.extract(transcript, call_date))
+        if backfilled:
+            usage["backfilled_from_rules"] = backfilled
     flagged = verify_evidence(summary, transcript)
     fallback_reason = " | ".join(failures)[:600] or None
     return {"summary": summary, "flagged": flagged, "usage": usage, "fallback_reason": fallback_reason}

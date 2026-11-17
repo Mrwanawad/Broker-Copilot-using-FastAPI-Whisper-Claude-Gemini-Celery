@@ -28,7 +28,10 @@ from app.summarizer.service import summarize
 log = logging.getLogger(__name__)
 
 # USD per unit, for the per-call cost monitor
-PRICE_PER_MTOK = {"claude-opus-5-5": (4.0, 20.0), "claude-sonnet-5-5": (2.0, 10.0), "claude-haiku-5-5": (0.10, 0.50)}
+PRICE_PER_MTOK = {
+    "claude-opus-5-5": (4.0, 20.0), "claude-sonnet-5-5": (2.0, 10.0), "claude-haiku-5-5": (0.10, 0.50),
+    "gemini-3.5-flash": (1.50, 9.00),  # paid tier list price; the free tier bills 0
+}
 WHISPER_API_PER_MIN = 0.006
 
 
