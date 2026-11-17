@@ -40,6 +40,18 @@ def test_rules_extract():
     assert all(e.segment is not None for e in s.needs.budget_max_egp.evidence)
 
 
+def test_budget_and_down_payment_percent_in_one_message():
+    t = parse_speaker_text("client: الميزانية حوالي 4 مليون ونص، والمقدم مش أكتر من 10%")
+    s = extract(t, date(2026, 11, 17))
+    assert s.needs.budget_max_egp.value == 4_500_000
+    assert s.needs.down_payment_egp.value is None
+
+    t = parse_speaker_text("client: ميزانيتي 6 مليون والمقدم 600 ألف")
+    s = extract(t, date(2026, 11, 17))
+    assert s.needs.budget_max_egp.value == 6_000_000
+    assert s.needs.down_payment_egp.value == 600_000
+
+
 def test_verify_evidence_penalizes_invented_quotes():
     t = parse_speaker_text(CALL_TEXT)
     s = extract(t, date(2026, 11, 12))

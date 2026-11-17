@@ -4,6 +4,7 @@ Runs when Claude is not configured, and is the baseline the LLM summarizer is ev
 Every value carries the segment and quote it came from, same contract as the LLM path.
 """
 
+import re
 from datetime import date, timedelta
 
 from app.domain import (
@@ -34,6 +35,8 @@ from app.text.numbers import find_amounts, find_bedrooms, find_percents, find_ye
 
 BUDGET_CUES = ["ميزاني", "budget", "معايا", "اقدر ادفع", "في حدود", "حدود", "لحد", "مش اكتر من", "max", "اقصى"]
 DOWN_CUES = ["مقدم", "down payment", "داون"]
+# clause breaks; commas/dots inside numbers ("4,250,000", "7.5M") don't split
+_CLAUSE = re.compile(r"[،؛;\n]|,(?!\d{3})|\.(?!\d)")
 RANGE_CUES = [" ل", " الى ", " لحد ", " to ", "-"]
 
 
@@ -85,20 +88,32 @@ def extract(transcript: Transcript, call_date: date | None = None) -> CallSummar
         if delivery:
             _set(needs.delivery, delivery[0], 0.75 if is_client else 0.55, i, seg)
 
-        amounts = [a.value for a in find_amounts(text)]
-        if amounts and _has(text, DOWN_CUES):
-            _set(needs.down_payment_egp, amounts[0], 0.85 if is_client else 0.55, i, seg)
-        elif amounts and is_client:
-            conf = 0.9 if _has(text, BUDGET_CUES) else 0.65
-            if len(amounts) >= 2:
-                _set(needs.budget_min_egp, min(amounts), conf, i, seg)
-                _set(needs.budget_max_egp, max(amounts), conf, i, seg)
-            else:
-                _set(needs.budget_max_egp, amounts[0], conf, i, seg)
-        if _has(text, DOWN_CUES) and not amounts:
-            pct = find_percents(text)
-            if pct and is_client:
+        # per clause, so "budget 4.5M, down payment max 10%" doesn't make 4.5M the down payment
+        budget_amounts = []
+        carry = False  # "المقدم مش كبير، أقصى حاجة 400 ألف": the cue's amount sits in the next clause
+        for clause in _CLAUSE.split(text):
+            amounts = find_amounts(clause)
+            low = clause.lower()
+            # amounts after cue_at are the down payment, amounts before it the budget; None = no cue
+            cue_at = min((low.find(c) for c in DOWN_CUES if c in low), default=None)
+            if cue_at is None and carry and not _has(clause, ["ميزاني", "budget"]):
+                cue_at = -1
+            has_pct = cue_at is not None and bool(find_percents(clause[max(cue_at, 0):]))
+            carry = cue_at is not None and not amounts and not has_pct
+            down = [a.value for a in amounts if cue_at is not None and a.start > cue_at]
+            if down:
+                _set(needs.down_payment_egp, down[0], 0.85 if is_client else 0.55, i, seg)
+            elif has_pct and is_client:
                 needs.down_payment_egp.evidence = _ev(i, seg)  # percentage noted; amount resolved by matcher
+            if is_client:
+                budget_amounts += [a.value for a in amounts if cue_at is None or a.start < cue_at]
+        if budget_amounts:
+            conf = 0.9 if _has(text, BUDGET_CUES) else 0.65
+            if len(budget_amounts) >= 2:
+                _set(needs.budget_min_egp, min(budget_amounts), conf, i, seg)
+                _set(needs.budget_max_egp, max(budget_amounts), conf, i, seg)
+            else:
+                _set(needs.budget_max_egp, budget_amounts[0], conf, i, seg)
 
         for plan, cues in PAYMENT_CUES.items():
             if _has(text, cues):
