@@ -133,7 +133,13 @@ matcher, diarization roles, metrics, API review flow, webhooks, Claude path with
 
 ## Deploy
 
-`render.yaml`: API (Docker) + worker + Redis + Postgres. Uploads go to S3-compatible object storage
+**Demo (Streamlit Community Cloud, free, no card):** entrypoint `ui/review_app.py`, Python 3.12,
+dependencies from `ui/requirements.txt`, apt packages from `packages.txt` (ffmpeg). With
+`BC_API_URL = "embedded"` the review page runs the FastAPI app in its own process (Celery eager, SQLite,
+heuristic diarization, Whisper small on CPU). Secrets: `BC_API_URL`, `BC_API_KEYS`, `BC_UI_API_KEY`,
+optional `GOOGLE_API_KEY`. Data resets when the app restarts.
+
+**Production:** `render.yaml`: API (Docker) + worker + Redis + Postgres. Uploads go to S3-compatible object storage
 (`BC_STORAGE_BACKEND=s3`, `BC_S3_BUCKET`, `BC_S3_ENDPOINT_URL` for R2/MinIO, `AWS_*` credentials), so the
 API and the worker scale separately; `Call.source_path` holds `s3://bucket/key` and the worker downloads it
 before ASR. Locally the default is disk (`BC_UPLOAD_DIR`).

@@ -1,10 +1,13 @@
 """Broker review page (Streamlit): submit a call, read the transcript and summary, approve the CRM diff.
 
     streamlit run ui/review_app.py
-Env: BC_API_URL (default http://localhost:8000), BC_UI_API_KEY (default dev-key).
+Env: BC_API_URL (default http://localhost:8000; "embedded" runs the API in this process, e.g. on
+Streamlit Community Cloud), BC_UI_API_KEY (default dev-key).
 """
 
 import os
+import sys
+from pathlib import Path
 
 import httpx
 import pandas as pd
@@ -12,9 +15,24 @@ import streamlit as st
 
 API = os.environ.get("BC_API_URL", "http://localhost:8000")
 KEY = os.environ.get("BC_UI_API_KEY", "dev-key")
-http = httpx.Client(base_url=API, headers={"X-API-Key": KEY}, timeout=600)
-
 st.set_page_config(page_title="Broker Copilot", layout="wide")
+
+
+@st.cache_resource
+def api_client() -> httpx.Client:
+    if API != "embedded":
+        return httpx.Client(base_url=API, headers={"X-API-Key": KEY}, timeout=600)
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from fastapi.testclient import TestClient
+
+    from app.db.session import init_db
+    from app.main import app
+
+    init_db()
+    return TestClient(app, headers={"X-API-Key": KEY})
+
+
+http = api_client()
 st.markdown(
     """
 <style>
